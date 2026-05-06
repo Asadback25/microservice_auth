@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import models
 from .User import CustomUser
 
@@ -11,3 +12,7 @@ class Otp(models.Model):
 
     def __str__(self):
         return f'{self.user.username}   -   {self.otp}'
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at

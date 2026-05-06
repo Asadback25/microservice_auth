@@ -7,4 +7,5 @@ from users.models import Profile
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
+        # get_or_create xatolikni oldini oladi (IntegrityError bermaydi)
+        Profile.objects.get_or_create(user=instance)
