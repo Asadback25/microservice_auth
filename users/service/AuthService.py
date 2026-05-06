@@ -74,11 +74,16 @@ class AuthService:
 
     @staticmethod
     def _send_otp(user, code):
-        send_otp_email.delay(user.email, code)
+        send_otp_email(user.email, code)
+
+
+
 
     # ========================
     #     PUBLIC METHODS
     # ========================
+
+
 
     @staticmethod
     @transaction.atomic
@@ -90,7 +95,7 @@ class AuthService:
         user = AuthService._create_user(username, email, password)
 
         # 3. profile
-        AuthService._create_profile(user)
+        # AuthService._create_profile(user)
 
         # 4. role
         AuthService._assign_default_role(user)
@@ -106,34 +111,48 @@ class AuthService:
             "email": user.email
         }
 
+
+
+
+
     @staticmethod
     @transaction.atomic
-    def verify_otp(email: str, code: str):
-        user = AuthService._get_user_by_email(email)
+    def verify_otp(username: str, code: str):
+        # 1. Userni topish
+        user = UserRepositories.get_by_username(username)
+        if not user:
+            raise UserNotFound()
 
+        # 2. OTPni tekshirish
         otp = OtpRepository.get_valid(user, code)
-
         if not otp:
             raise InvalidOTP()
 
-        # mark used
+        # 3. Jarayonni yakunlash
         OtpRepository.mark_used(otp)
-
-        # activate user
         UserRepositories.update_user(user, is_active=True)
 
-        return {"message": "User verified"}
+        return {"message": "Success! User verified."}
+
+    # users/service/AuthService.py
 
     @staticmethod
     @transaction.atomic
-    def resend_otp(email: str):
-        user = AuthService._get_user_by_email(email)
+    def resend_otp(username: str):
+        # 1. Userni username orqali topamiz
+        user = UserRepositories.get_by_username(username)
+        if not user:
+            raise UserNotFound()
 
+        # 2. Yangi OTP yaratamiz (eskilarini o'chirib, yangisini save qiladi)
         otp = AuthService._generate_and_save_otp(user)
 
+        # 3. Emailga yuboramiz
         AuthService._send_otp(user, otp.otp)
 
-        return {"message": "OTP resent"}
+        return {"message": "OTP qayta yuborildi", "email": user.email}
+
+
 
     @staticmethod
     def login(username: str, password: str):

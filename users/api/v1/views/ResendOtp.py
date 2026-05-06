@@ -1,17 +1,15 @@
-from users.api.v1.serializers import ResendOtpSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from users.service import AuthService
 from users.exceptions import BaseAppException
 
+# users/api/v1/views/ResendOtp.py
+
 class ResendOtpView(APIView):
-
-    def post(self, request):
-        serializer = ResendOtpSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
+    def post(self, request, username): # username URLdan keladi
         try:
-            result = AuthService.resend_otp(**serializer.validated_data)
+            # Service'ga faqat username uzatamiz
+            result = AuthService.resend_otp(username=username)
             return Response(result)
 
         except BaseAppException as e:
